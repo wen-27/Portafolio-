@@ -1,38 +1,47 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { motion, AnimatePresence, useAnimation } from "framer-motion"
+import { useEffect, useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface LogoIntroProps {
   onComplete: () => void
 }
 
-// Floating particle component
-function Particle({ delay }: { delay: number }) {
-  const randomX = Math.random() * 100
-  const randomSize = 2 + Math.random() * 3
+interface ParticleData {
+  id: number
+  delay: number
+  x: number
+  size: number
+  y: number
+  driftX: number
+  duration: number
+  repeatDelay: number
+}
+
+function Particle({ particle }: { particle: ParticleData }) {
   return (
     <motion.div
       className="absolute rounded-full"
       style={{
-        left: `${randomX}%`,
+        left: `${particle.x}%`,
         bottom: "-10px",
-        width: randomSize,
-        height: randomSize,
-        background: `radial-gradient(circle, oklch(0.88 0.08 350 / 0.9), oklch(0.72 0.18 350 / 0.4))`,
+        width: `${particle.size}px`,
+        height: `${particle.size}px`,
+        background:
+          "radial-gradient(circle, oklch(0.88 0.08 350 / 0.9), oklch(0.72 0.18 350 / 0.4))",
       }}
-      initial={{ y: 0, opacity: 0 }}
+      initial={{ y: 0, opacity: 0, x: 0 }}
       animate={{
-        y: [0, -(200 + Math.random() * 300)],
+        y: [0, -particle.y],
         opacity: [0, 0.8, 0],
-        x: [(Math.random() - 0.5) * 40],
+        x: [0, particle.driftX],
       }}
       transition={{
-        delay,
-        duration: 3 + Math.random() * 2,
+        delay: particle.delay,
+        duration: particle.duration,
         ease: "easeOut",
         repeat: Infinity,
-        repeatDelay: Math.random() * 2,
+        repeatDelay: particle.repeatDelay,
       }}
     />
   )
@@ -40,23 +49,23 @@ function Particle({ delay }: { delay: number }) {
 
 export default function LogoIntro({ onComplete }: LogoIntroProps) {
   const [phase, setPhase] = useState<"intro" | "exit">("intro")
-  const controls = useAnimation()
+  const [particles, setParticles] = useState<ParticleData[]>([])
 
-  // The W path — elegant, slightly serif-style with fine strokes
-  // ViewBox 0 0 200 200
-  const wPath =
-    "M 20 30 L 55 160 L 100 80 L 145 160 L 180 30"
-
-  // Length of the W path for strokeDasharray
-  const pathLength = 520
+  const wPath = "M 20 30 L 55 160 L 100 80 L 145 160 L 180 30"
 
   useEffect(() => {
-    // Phase timeline:
-    // 0.0s — appear
-    // 0.4s — draw stroke
-    // 1.6s — fill + glow
-    // 2.4s — pulse
-    // 3.0s — exit fade
+    const generatedParticles = Array.from({ length: 16 }, (_, i) => ({
+      id: i,
+      delay: 0.6 + i * 0.15,
+      x: Math.random() * 100,
+      size: 2 + Math.random() * 3,
+      y: 200 + Math.random() * 300,
+      driftX: (Math.random() - 0.5) * 40,
+      duration: 3 + Math.random() * 2,
+      repeatDelay: Math.random() * 2,
+    }))
+
+    setParticles(generatedParticles)
 
     const timer = setTimeout(() => {
       setPhase("exit")
@@ -65,8 +74,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
 
     return () => clearTimeout(timer)
   }, [onComplete])
-
-  const particles = Array.from({ length: 16 }, (_, i) => i)
 
   return (
     <AnimatePresence>
@@ -82,7 +89,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
           exit={{ opacity: 0, filter: "blur(8px)" }}
           transition={{ duration: 0.85, ease: [0.76, 0, 0.24, 1] }}
         >
-          {/* Background soft glow blob */}
           <motion.div
             className="absolute rounded-full pointer-events-none"
             style={{
@@ -97,14 +103,12 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
             transition={{ delay: 0.3, duration: 1.8, ease: "easeOut" }}
           />
 
-          {/* Particles */}
           <div className="absolute inset-0 pointer-events-none">
-            {particles.map((i) => (
-              <Particle key={i} delay={0.6 + i * 0.15} />
+            {particles.map((particle) => (
+              <Particle key={particle.id} particle={particle} />
             ))}
           </div>
 
-          {/* Logo container */}
           <motion.div
             className="relative flex items-center justify-center"
             initial={{ scale: 0.85, opacity: 0 }}
@@ -115,7 +119,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
               ease: [0.34, 1.56, 0.64, 1],
             }}
           >
-            {/* Outer glow ring */}
             <motion.div
               className="absolute rounded-full pointer-events-none"
               style={{
@@ -129,7 +132,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
               transition={{ delay: 1.4, duration: 1.2 }}
             />
 
-            {/* The SVG W */}
             <svg
               viewBox="0 0 200 200"
               width={200}
@@ -139,14 +141,12 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
               style={{ overflow: "visible" }}
             >
               <defs>
-                {/* Pink gradient fill */}
                 <linearGradient id="wGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="oklch(0.88 0.08 350)" />
                   <stop offset="45%" stopColor="oklch(0.72 0.18 350)" />
                   <stop offset="100%" stopColor="oklch(0.56 0.22 350)" />
                 </linearGradient>
 
-                {/* Glow filter */}
                 <filter id="wGlow" x="-40%" y="-40%" width="180%" height="180%">
                   <feGaussianBlur stdDeviation="4" result="blur" />
                   <feMerge>
@@ -155,7 +155,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
                   </feMerge>
                 </filter>
 
-                {/* Stronger glow */}
                 <filter id="wGlowStrong" x="-60%" y="-60%" width="220%" height="220%">
                   <feGaussianBlur stdDeviation="8" result="blur" />
                   <feMerge>
@@ -165,7 +164,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
                 </filter>
               </defs>
 
-              {/* Shadow/depth stroke layer */}
               <motion.path
                 d={wPath}
                 stroke="oklch(0.56 0.22 350 / 0.3)"
@@ -179,7 +177,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
                 transition={{ delay: 0.4, duration: 1.1, ease: [0.76, 0, 0.24, 1] }}
               />
 
-              {/* Main stroke — drawn with dasharray */}
               <motion.path
                 d={wPath}
                 stroke="url(#wGradient)"
@@ -193,7 +190,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
                 transition={{ delay: 0.4, duration: 1.1, ease: [0.76, 0, 0.24, 1] }}
               />
 
-              {/* Highlight stroke — bright thin line on top */}
               <motion.path
                 d={wPath}
                 stroke="oklch(0.97 0.04 350 / 0.7)"
@@ -206,7 +202,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
                 transition={{ delay: 0.55, duration: 1.05, ease: [0.76, 0, 0.24, 1] }}
               />
 
-              {/* Pulse / glow layer — appears after stroke draw */}
               <motion.path
                 d={wPath}
                 stroke="oklch(0.72 0.18 350 / 0.5)"
@@ -227,7 +222,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
             </svg>
           </motion.div>
 
-          {/* Tagline — appears below after draw */}
           <motion.p
             className="absolute font-mono tracking-[0.35em] text-xs uppercase"
             style={{ bottom: "calc(50% - 140px)", color: "oklch(0.72 0.18 350 / 0.7)" }}
@@ -243,7 +237,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
   )
 }
 
-// Small navbar logo (used after intro exits)
 export function NavbarLogo() {
   return (
     <svg
