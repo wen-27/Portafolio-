@@ -5,7 +5,7 @@ Este proyecto fue creado para mostrar mi perfil profesional, mis habilidades, mi
 
 ## 🌐 Demo en línea
 
-👉 [Ver portafolio desplegado en Vercel](https://portafolio-egpt0g7rr-wendyangelicavegasanchez-6870s-projects.vercel.app/)
+👉 [Ver portafolio desplegado en Vercel](https://portafoliowen.netlify.app/)
 
 ## 🛠️ Tecnologías usadas
 
